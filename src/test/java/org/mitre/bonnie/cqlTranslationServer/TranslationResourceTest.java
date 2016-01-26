@@ -1,6 +1,6 @@
-package org.mitre.bonnie.cql2elmserver;
+package org.mitre.bonnie.cqlTranslationServer;
 
-import org.mitre.bonnie.cql2elmserver.Main;
+import org.mitre.bonnie.cqlTranslationServer.Main;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -11,8 +11,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
-public class MyResourceTest {
+public class TranslationResourceTest {
 
     private HttpServer server;
     private WebTarget target;
@@ -35,7 +36,7 @@ public class MyResourceTest {
 
     @After
     public void tearDown() throws Exception {
-        server.stop();
+        server.shutdownNow();
     }
 
     /**
@@ -43,7 +44,7 @@ public class MyResourceTest {
      */
     @Test
     public void testGetIt() {
-        String responseMsg = target.path("myresource").request().get(String.class);
+        String responseMsg = target.path("translator").request().get(String.class);
         assertEquals("Got it!", responseMsg);
     }
 }
