@@ -6,6 +6,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
 import java.net.URI;
+import org.glassfish.jersey.server.ServerProperties;
 
 /**
  * Main class.
@@ -26,6 +27,7 @@ public class Main {
     // create a resource config that scans for JAX-RS resources and providers
     // in org.mitre.bonnie.cqlTranslationServer package
     final ResourceConfig rc = new ResourceConfig().packages("org.mitre.bonnie.cqlTranslationServer");
+    rc.property(ServerProperties.RESPONSE_SET_STATUS_OVER_SEND_ERROR, "true");
 
     // create and start a new instance of grizzly http server
     // exposing the Jersey application at BASE_URI
