@@ -19,6 +19,10 @@ import org.cqframework.cql.cql2elm.CqlTranslator.Options;
  */
 @Path("translator")
 public class TranslationResource {
+  
+  public static final String CQL_TEXT_TYPE = "application/cql";
+  public static final String ELM_XML_TYPE = "application/elm+xml";
+  public static final String ELM_JSON_TYPE = "application/elm+json";
 
   /**
    * Method handling HTTP GET requests. The returned object will be sent to the
@@ -33,43 +37,41 @@ public class TranslationResource {
   }
 
   @POST
-  @Consumes("application/cql")
-  @Produces("application/elm+xml")
+  @Consumes(CQL_TEXT_TYPE)
+  @Produces(ELM_XML_TYPE)
   public Response cqlToElmXml(File cql) {
+    CqlTranslator translator = getTranslator(cql);
+    ResponseBuilder resp = getResponse(translator);
+    resp = resp.entity(translator.toXml()).type(ELM_XML_TYPE);
+    return resp.build();
+  }
+
+  @POST
+  @Consumes(CQL_TEXT_TYPE)
+  @Produces(ELM_JSON_TYPE)
+  public Response cqlToElmJson(File cql) {
+    CqlTranslator translator = getTranslator(cql);
+    ResponseBuilder resp = getResponse(translator);
+    resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
+    return resp.build();
+  }
+
+  private CqlTranslator getTranslator(File cql) {
     try {
       //LibrarySourceLoader.registerProvider(
       //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
       Options options[] = {Options.EnableAnnotations};
-      CqlTranslator translator = CqlTranslator.fromFile(cql, options);
+      return CqlTranslator.fromFile(cql, options);
       //LibrarySourceLoader.clearProviders();
-      
-      ResponseBuilder resp = translator.getErrors().size() > 0 ? 
-              Response.status(Status.BAD_REQUEST) : Response.ok();
-      resp = resp.entity(translator.toXml()).type("application/elm+xml");
-      return resp.build();
-    } catch (IOException ex) {
+    } catch (IOException e) {
       throw new TranslationFailureException("Unable to read request");
     }
   }
 
-  @POST
-  @Consumes("application/cql")
-  @Produces("application/elm+json")
-  public Response cqlToElmJson(File cql) {
-    try {
-      //LibrarySourceLoader.registerProvider(
-      //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
-      Options options[] = {Options.EnableAnnotations};
-      CqlTranslator translator = CqlTranslator.fromFile(cql, options);
-      //LibrarySourceLoader.clearProviders();
-      
-      ResponseBuilder resp = translator.getErrors().size() > 0 ? 
-              Response.status(Status.BAD_REQUEST) : Response.ok();
-      resp = resp.entity(translator.toJson()).type("application/elm+xml");
-      return resp.build();
-    } catch (IOException ex) {
-      throw new TranslationFailureException("Unable to read request");
-    }
+  private ResponseBuilder getResponse(CqlTranslator translator) {
+    ResponseBuilder resp = translator.getErrors().size() > 0
+            ? Response.status(Status.BAD_REQUEST) : Response.ok();
+    return resp;
   }
 
 }
