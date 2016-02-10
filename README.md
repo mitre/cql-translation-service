@@ -38,10 +38,6 @@ Will return
           "id": "CMS146",
           "version": "2"
         },
-        "schemaIdentifier": {
-          "id": "urn:hl7-org:elm",
-          "version": "r1"
-        },
         "usings": {"def": [
           {
             "localIdentifier": "System",
