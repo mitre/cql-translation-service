@@ -13,9 +13,12 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import org.cqframework.cql.cql2elm.CqlTranslator;
 import org.cqframework.cql.cql2elm.CqlTranslator.Options;
+import org.cqframework.cql.cql2elm.LibraryManager;
 
 /**
- * Root resource (exposed at "translator" path)
+ * Root resource (exposed at "translator" path). Uses default per-request
+ * life cycle so a new CQL LibraryManager is instantiated and used for each
+ * request that can include a batch of related CQL files.
  */
 @Path("translator")
 public class TranslationResource {
@@ -23,13 +26,12 @@ public class TranslationResource {
   public static final String CQL_TEXT_TYPE = "application/cql";
   public static final String ELM_XML_TYPE = "application/elm+xml";
   public static final String ELM_JSON_TYPE = "application/elm+json";
-
-  /**
-   * Method handling HTTP GET requests. The returned object will be sent to the
-   * client as "text/plain" media type.
-   *
-   * @return String that will be returned as a text/plain response.
-   */
+  private final LibraryManager libraryManager;
+  
+  public TranslationResource() {
+    this.libraryManager = new LibraryManager();
+  }
+  
   @GET
   @Produces(MediaType.TEXT_PLAIN)
   public String getIt() {
@@ -61,7 +63,7 @@ public class TranslationResource {
       //LibrarySourceLoader.registerProvider(
       //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
       Options options[] = {Options.EnableAnnotations};
-      return CqlTranslator.fromFile(cql, options);
+      return CqlTranslator.fromFile(cql, libraryManager, options);
       //LibrarySourceLoader.clearProviders();
     } catch (IOException e) {
       throw new TranslationFailureException("Unable to read request");
