@@ -32,12 +32,6 @@ public class TranslationResource {
     this.libraryManager = new LibraryManager();
   }
   
-  @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  public String getIt() {
-    return "Got it!";
-  }
-
   @POST
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_XML_TYPE)
