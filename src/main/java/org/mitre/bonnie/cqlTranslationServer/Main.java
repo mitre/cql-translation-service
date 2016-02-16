@@ -6,6 +6,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import java.io.IOException;
 import java.net.URI;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ServerProperties;
 
 /**
@@ -28,6 +29,7 @@ public class Main {
     // in org.mitre.bonnie.cqlTranslationServer package
     final ResourceConfig rc = new ResourceConfig().packages("org.mitre.bonnie.cqlTranslationServer");
     rc.property(ServerProperties.RESPONSE_SET_STATUS_OVER_SEND_ERROR, "true");
+    rc.register(MultiPartFeature.class);
 
     // create and start a new instance of grizzly http server
     // exposing the Jersey application at BASE_URI

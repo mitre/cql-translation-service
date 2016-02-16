@@ -14,6 +14,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.namespace.NamespaceContext;
@@ -27,6 +28,8 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +51,7 @@ public class TranslationResourceTest {
     // start the server
     server = Main.startServer();
     // create the client
-    Client c = ClientBuilder.newClient();
+    Client c = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
 
     // uncomment the following line if you want to enable
     // support for JSON in the client (you also have to uncomment
@@ -154,6 +157,29 @@ public class TranslationResourceTest {
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));
+  }
+  
+  @Test
+  public void testSingleLibraryAsMultipart() {
+    File file = new File(TranslationResourceTest.class.getResource("valid.cql").getFile());
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    pkg.field("foo", file, new MediaType("application", "cql"));
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    assertTrue(resp.hasEntity());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(1, translatedPkg.getBodyParts().size());
+    assertEquals(1, translatedPkg.getFields("foo").size());
+    JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
+    JsonObject obj = reader.readObject();
+    JsonObject library = obj.getJsonObject("library");
+    JsonArray annotations = library.getJsonArray("annotation");
+    assertNull(annotations);
+    JsonObject identifier = library.getJsonObject("identifier");
+    assertEquals("CMS146", identifier.getString("id"));
+    assertEquals("2", identifier.getString("version"));    
   }
 
   private static class ElmNamespaceContext implements NamespaceContext {

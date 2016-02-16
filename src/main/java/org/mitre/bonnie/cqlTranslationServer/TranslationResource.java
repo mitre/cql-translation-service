@@ -3,7 +3,8 @@ package org.mitre.bonnie.cqlTranslationServer;
 import java.io.File;
 import java.io.IOException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -14,6 +15,9 @@ import javax.ws.rs.core.Response.Status;
 import org.cqframework.cql.cql2elm.CqlTranslator;
 import org.cqframework.cql.cql2elm.CqlTranslator.Options;
 import org.cqframework.cql.cql2elm.LibraryManager;
+import org.cqframework.cql.cql2elm.LibrarySourceLoader;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 /**
  * Root resource (exposed at "translator" path). Uses default per-request
@@ -50,6 +54,40 @@ public class TranslationResource {
     ResponseBuilder resp = getResponse(translator);
     resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
     return resp.build();
+  }
+  
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.MULTIPART_FORM_DATA)
+  public Response cqlPackageToElmPackage(FormDataMultiPart pkg, 
+          @HeaderParam("X-TargetFormat") @DefaultValue(ELM_JSON_TYPE) MediaType targetFormat) {
+    try {
+      FormDataMultiPart translatedPkg = new FormDataMultiPart();
+      MultipartLibrarySourceProvider lsp = new MultipartLibrarySourceProvider(pkg);
+      for (String fieldId: pkg.getFields().keySet()) {
+        for (FormDataBodyPart part: pkg.getFields(fieldId)) {
+          CqlTranslator translator = getTranslator(part.getEntityAs(File.class), lsp);
+          translatedPkg.field(fieldId, translator.toJson(), targetFormat);
+        }
+      }
+      ResponseBuilder resp = Response.ok().type(MediaType.MULTIPART_FORM_DATA).entity(translatedPkg);
+      return resp.build();
+    } catch (IOException ex) {
+      throw new TranslationFailureException("Unable to read request");
+    }
+  }
+  
+  private CqlTranslator getTranslator(File cql, MultipartLibrarySourceProvider lsp) {
+    try {
+      // TODO: Static LibrarySourceLoader needs to be made a per-request instance
+      LibrarySourceLoader.registerProvider(lsp);
+      Options options[] = {Options.EnableAnnotations};
+      CqlTranslator translatedLibrary = CqlTranslator.fromFile(cql, libraryManager, options);
+      LibrarySourceLoader.clearProviders();
+      return translatedLibrary;
+    } catch (IOException e) {
+      throw new TranslationFailureException("Unable to read request");
+    }
   }
 
   private CqlTranslator getTranslator(File cql) {
