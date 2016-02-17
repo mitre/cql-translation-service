@@ -35,6 +35,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -180,6 +181,34 @@ public class TranslationResourceTest {
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));    
+  }
+  
+  @Test 
+  public void testCrossLibraryResolution() {
+    String filenames[] = {"ProvidesDependency.cql", "HasDependency.cql"};
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    for (String filename: filenames) {
+      File file = new File(TranslationResourceTest.class.getResource(filename).getFile());
+      pkg.field(filename, file, new MediaType("application", "cql"));
+    }
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    assertTrue(resp.hasEntity());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(2, translatedPkg.getBodyParts().size());
+    for (String filename: filenames) {
+      assertEquals(1, translatedPkg.getFields(filename).size());
+      JsonReader reader = Json.createReader(new StringReader(translatedPkg.getFields(filename).get(0).getEntityAs(String.class)));
+      JsonObject obj = reader.readObject();
+      JsonObject library = obj.getJsonObject("library");
+      JsonArray annotations = library.getJsonArray("annotation");
+      assertNull(annotations); // should be no errors, dependency should be resolved
+      JsonObject identifier = library.getJsonObject("identifier");
+      assertNotNull(identifier.getString("id"));
+      assertNotNull(identifier.getString("version"));    
+    }    
   }
 
   private static class ElmNamespaceContext implements NamespaceContext {
