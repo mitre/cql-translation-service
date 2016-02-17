@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response.Status;
 import org.cqframework.cql.cql2elm.CqlTranslator;
 import org.cqframework.cql.cql2elm.CqlTranslator.Options;
 import org.cqframework.cql.cql2elm.LibraryManager;
-import org.cqframework.cql.cql2elm.LibrarySourceLoader;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
@@ -64,9 +63,10 @@ public class TranslationResource {
     try {
       FormDataMultiPart translatedPkg = new FormDataMultiPart();
       MultipartLibrarySourceProvider lsp = new MultipartLibrarySourceProvider(pkg);
+      libraryManager.getLibrarySourceLoader().registerProvider(lsp);
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
-          CqlTranslator translator = getTranslator(part.getEntityAs(File.class), lsp);
+          CqlTranslator translator = getTranslator(part.getEntityAs(File.class));
           translatedPkg.field(fieldId, translator.toJson(), targetFormat);
         }
       }
@@ -77,19 +77,6 @@ public class TranslationResource {
     }
   }
   
-  private CqlTranslator getTranslator(File cql, MultipartLibrarySourceProvider lsp) {
-    try {
-      // TODO: Static LibrarySourceLoader needs to be made a per-request instance
-      LibrarySourceLoader.registerProvider(lsp);
-      Options options[] = {Options.EnableAnnotations};
-      CqlTranslator translatedLibrary = CqlTranslator.fromFile(cql, libraryManager, options);
-      LibrarySourceLoader.clearProviders();
-      return translatedLibrary;
-    } catch (IOException e) {
-      throw new TranslationFailureException("Unable to read request");
-    }
-  }
-
   private CqlTranslator getTranslator(File cql) {
     try {
       //LibrarySourceLoader.registerProvider(

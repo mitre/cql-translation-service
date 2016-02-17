@@ -49,6 +49,10 @@ public class MultipartLibrarySourceProvider implements LibrarySourceProvider {
     return part.getEntityAs(InputStream.class);
   }
 
+  /**
+   * Minimal ANTLR visitor for CQL that simply extracts the library ID for a
+   * CQL file.
+   */
   private static class CqlLibraryIdentificationVisitor extends cqlBaseVisitor {
 
     private final org.hl7.elm.r1.ObjectFactory of = new org.hl7.elm.r1.ObjectFactory();
