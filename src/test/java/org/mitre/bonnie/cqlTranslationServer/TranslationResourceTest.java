@@ -138,7 +138,6 @@ public class TranslationResourceTest {
     assertEquals("include", errorAnnotation.getString("errorType"));
     assertEquals(5, errorAnnotation.getInt("startLine"));
     assertEquals(1, errorAnnotation.getInt("startChar"));
-    assertEquals("CMS146", errorAnnotation.getString("library"));
     assertEquals("CMSAll", errorAnnotation.getString("targetIncludeLibraryId"));
     assertEquals("1", errorAnnotation.getString("targetIncludeLibraryVersionId"));
   }
