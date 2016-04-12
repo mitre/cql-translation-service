@@ -9,6 +9,14 @@
   <version>1.0-SNAPSHOT</version>
   <name>cqlTranslationServer</name>
 
+  <repositories>
+    <repository>
+      <id>sonatype-public</id>
+      <name>Sonatype Public</name>
+      <url>https://oss.sonatype.org/content/groups/public/</url>
+    </repository>
+  </repositories>
+  
   <dependencyManagement>
     <dependencies>
       <dependency>
