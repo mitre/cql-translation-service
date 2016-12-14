@@ -1,5 +1,21 @@
-FROM java:openjdk-8-alpine
+# fetch basic image
+FROM maven:3.3.9-jdk-8
 
-COPY ./target/cqlTranslationServer-1.0-SNAPSHOT-jar-with-dependencies.jar /app/
+# application placed into /opt/app
+RUN mkdir -p /app
+WORKDIR /app
+
+# selectively add the POM file and
+# install dependencies
+COPY pom.xml /app/
+RUN mvn install
+
+# rest of the project
+COPY src /app/src
+RUN mvn package && rm -rf /app/src
+
+# local application port
 EXPOSE 8080
-CMD java -jar /app/cqlTranslationServer-1.0-SNAPSHOT-jar-with-dependencies.jar
+
+# execute it
+CMD ["mvn", "exec:java"]
