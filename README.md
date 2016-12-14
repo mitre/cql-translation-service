@@ -25,7 +25,7 @@ Example usage via HTTP request:
 
     valueset "Acute Pharyngitis": '2.16.840.1.113883.3.464.1003.102.12.1011'
     ...
-    
+
 Will return
 
     HTTP/1.1 200 OK
@@ -62,8 +62,18 @@ Will return
     }
 
 The service also supports `POST` of multiple CQL libraries packaged as
-`multipart/form-data`. The result will be a similar package with one ELM part for each 
+`multipart/form-data`. The result will be a similar package with one ELM part for each
 CQL part in the submitted package.
+
+## Docker Deployment
+
+You may deploy pre-built Docker images into your existing hosting environment with:
+
+	docker run -d -p 8080:8080 --restart unless-stopped p3000/cql-translation-service:latest # or any official tag
+
+And you're done. No environment variables or further configuration are needed. Jedi's may use your existing Kubernetes, Open Shift etc installations as you see fit. :) To build your own image with local changes already built via `mvn package`:
+
+	docker build -t p3000/cql-translation-service:latest . # with your your own repo and tag strings!
 
 ## License
 
