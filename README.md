@@ -71,9 +71,11 @@ You may deploy pre-built Docker images into your existing hosting environment wi
 
 	docker run -d -p 8080:8080 --restart unless-stopped p3000/cql-translation-service:latest # or any official tag
 
-And you're done. No environment variables or further configuration are needed. Jedi's may use your existing Kubernetes, Open Shift etc installations as you see fit. :) To build your own image with local changes already built via `mvn package`:
+And you're done. No environment variables or further configuration are needed. Jedi's may use your existing Kubernetes, Open Shift etc installations as you see fit. :)
 
-	docker build -t p3000/cql-translation-service:latest . # with your your own repo and tag strings!
+To build your own image:
+
+	docker build -t p3000/cql-translation-service:latest . # but use your your own repo and tag strings!
 
 ## License
 
