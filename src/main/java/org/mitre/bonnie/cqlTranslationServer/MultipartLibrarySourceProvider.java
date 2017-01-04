@@ -33,7 +33,7 @@ public class MultipartLibrarySourceProvider implements LibrarySourceProvider {
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       cqlParser parser = new cqlParser(tokens);
       parser.setBuildParseTree(true);
-      ParseTree tree = parser.logic();
+      ParseTree tree = parser.library();
       CqlLibraryIdentificationVisitor visitor = new CqlLibraryIdentificationVisitor();
       visitor.visit(tree);
       if (visitor.getLibraryId() != null)

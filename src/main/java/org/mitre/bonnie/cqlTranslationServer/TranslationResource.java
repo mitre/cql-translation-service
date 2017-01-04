@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response.Status;
 import org.cqframework.cql.cql2elm.CqlTranslator;
 import org.cqframework.cql.cql2elm.CqlTranslator.Options;
 import org.cqframework.cql.cql2elm.LibraryManager;
+import org.cqframework.cql.cql2elm.ModelManager;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
@@ -29,10 +30,12 @@ public class TranslationResource {
   public static final String CQL_TEXT_TYPE = "application/cql";
   public static final String ELM_XML_TYPE = "application/elm+xml";
   public static final String ELM_JSON_TYPE = "application/elm+json";
+  private final ModelManager modelManager;
   private final LibraryManager libraryManager;
-  
+
   public TranslationResource() {
-    this.libraryManager = new LibraryManager();
+    this.modelManager = new ModelManager();
+    this.libraryManager = new LibraryManager(modelManager);
   }
   
   @POST
@@ -82,7 +85,7 @@ public class TranslationResource {
       //LibrarySourceLoader.registerProvider(
       //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
       Options options[] = {Options.EnableAnnotations};
-      return CqlTranslator.fromFile(cql, libraryManager, options);
+      return CqlTranslator.fromFile(cql, modelManager, libraryManager, options);
       //LibrarySourceLoader.clearProviders();
     } catch (IOException e) {
       throw new TranslationFailureException("Unable to read request");
