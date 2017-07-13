@@ -70,7 +70,11 @@ public class TranslationResource {
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
           CqlTranslator translator = getTranslator(part.getEntityAs(File.class));
-          translatedPkg.field(fieldId, translator.toJson(), targetFormat);
+          if (targetFormat.equals(new MediaType("application", "elm+xml"))) {
+            translatedPkg.field(fieldId, translator.toXml(), targetFormat);
+          } else {
+            translatedPkg.field(fieldId, translator.toJson(), targetFormat);
+          }
         }
       }
       ResponseBuilder resp = Response.ok().type(MediaType.MULTIPART_FORM_DATA).entity(translatedPkg);
