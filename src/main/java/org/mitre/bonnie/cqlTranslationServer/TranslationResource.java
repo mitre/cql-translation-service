@@ -70,7 +70,7 @@ public class TranslationResource {
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
           CqlTranslator translator = getTranslator(part.getEntityAs(File.class));
-          if (targetFormat.equals(new MediaType("application", "elm+xml"))) {
+          if (targetFormat.equals(MediaType.valueOf(ELM_XML_TYPE))) {
             translatedPkg.field(fieldId, translator.toXml(), targetFormat);
           } else {
             translatedPkg.field(fieldId, translator.toJson(), targetFormat);
