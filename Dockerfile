@@ -19,4 +19,4 @@ EXPOSE 8080
 
 # execute it
 # CMD ["mvn", "exec:java"]
-CMD ["java", "-jar", "target/cqlTranslationServer-1.2.8-SNAPSHOT-jar-with-dependencies.jar", "-d"]
+CMD ["java", "-jar", "target/cqlTranslationServer-1.2.10-SNAPSHOT-jar-with-dependencies.jar", "-d"]
