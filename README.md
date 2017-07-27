@@ -69,17 +69,17 @@ CQL part in the submitted package.
 
 You may deploy pre-built Docker images into your existing hosting environment with:
 
-	docker run -d -p 8080:8080 --restart unless-stopped p3000/cql-translation-service:latest # or any official tag
+	docker run -d -p 8080:8080 --restart unless-stopped cqframework/cql-translation-service:latest # or any official tag
 
 And you're done. No environment variables or further configuration are needed. Jedi's may use your existing Kubernetes, Open Shift etc installations as you see fit. :)
 
 To build your own image:
 
-	docker build -t p3000/cql-translation-service:latest . # but use your your own repo and tag strings!
+	docker build -t cqframework/cql-translation-service:latest . # but use your your own repo and tag strings!
 
 ## License
 
-Copyright 2016 The MITRE Corporation
+Copyright 2016-2017 The MITRE Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
