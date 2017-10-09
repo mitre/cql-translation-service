@@ -88,7 +88,7 @@ public class TranslationResource {
     try {
       //LibrarySourceLoader.registerProvider(
       //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
-      Options options[] = {Options.EnableAnnotations};
+      Options options[] = {Options.EnableAnnotations, Options.DisablePromotion};
       return CqlTranslator.fromFile(cql, modelManager, libraryManager, options);
       //LibrarySourceLoader.clearProviders();
     } catch (IOException e) {
