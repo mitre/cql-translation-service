@@ -1,5 +1,7 @@
 package org.mitre.bonnie.cqlTranslationServer;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import javax.ws.rs.Consumes;
@@ -18,6 +20,7 @@ import org.cqframework.cql.cql2elm.LibraryManager;
 import org.cqframework.cql.cql2elm.ModelManager;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 /**
  * Root resource (exposed at "translator" path). Uses default per-request
@@ -42,7 +45,7 @@ public class TranslationResource {
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_XML_TYPE)
   public Response cqlToElmXml(File cql) {
-    CqlTranslator translator = getTranslator(cql);
+    CqlTranslator translator = getTranslator(cql, false);
     ResponseBuilder resp = getResponse(translator);
     resp = resp.entity(translator.toXml()).type(ELM_XML_TYPE);
     return resp.build();
@@ -52,7 +55,7 @@ public class TranslationResource {
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_JSON_TYPE)
   public Response cqlToElmJson(File cql) {
-    CqlTranslator translator = getTranslator(cql);
+    CqlTranslator translator = getTranslator(cql, false);
     ResponseBuilder resp = getResponse(translator);
     resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
     return resp.build();
@@ -62,14 +65,15 @@ public class TranslationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.MULTIPART_FORM_DATA)
   public Response cqlPackageToElmPackage(FormDataMultiPart pkg, 
-          @HeaderParam("X-TargetFormat") @DefaultValue(ELM_JSON_TYPE) MediaType targetFormat) {
+          @HeaderParam("X-TargetFormat") @DefaultValue(ELM_JSON_TYPE) MediaType targetFormat,
+                                         @DefaultValue("false") @FormDataParam("disablePromotion") boolean disablePromotion) {
     try {
       FormDataMultiPart translatedPkg = new FormDataMultiPart();
       MultipartLibrarySourceProvider lsp = new MultipartLibrarySourceProvider(pkg);
       libraryManager.getLibrarySourceLoader().registerProvider(lsp);
       for (String fieldId: pkg.getFields().keySet()) {
-        for (FormDataBodyPart part: pkg.getFields(fieldId)) {
-          CqlTranslator translator = getTranslator(part.getEntityAs(File.class));
+        for (FormDataBodyPart part: pkg.getFields(fieldId)){
+          CqlTranslator translator = getTranslator(part.getEntityAs(File.class), disablePromotion);
           if (targetFormat.equals(MediaType.valueOf(ELM_XML_TYPE))) {
             translatedPkg.field(fieldId, translator.toXml(), targetFormat);
           } else {
@@ -84,11 +88,16 @@ public class TranslationResource {
     }
   }
   
-  private CqlTranslator getTranslator(File cql) {
+  private CqlTranslator getTranslator(File cql, boolean disablePromotion) {
     try {
       //LibrarySourceLoader.registerProvider(
       //        new DefaultLibrarySourceProvider(cql.toPath().getParent()));
-      Options options[] = {Options.EnableAnnotations, Options.DisablePromotion};
+      List<Options> optionsList = new ArrayList<Options>();
+      optionsList.add(Options.EnableAnnotations);
+      if (disablePromotion) {
+        optionsList.add(Options.DisablePromotion);
+      }
+      Options[] options = optionsList.toArray(new Options[optionsList.size()]);
       return CqlTranslator.fromFile(cql, modelManager, libraryManager, options);
       //LibrarySourceLoader.clearProviders();
     } catch (IOException e) {
