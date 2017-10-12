@@ -45,7 +45,7 @@ public class TranslationResource {
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_XML_TYPE)
   public Response cqlToElmXml(File cql) {
-    CqlTranslator translator = getTranslator(cql, false);
+    CqlTranslator translator = getTranslator(cql);
     ResponseBuilder resp = getResponse(translator);
     resp = resp.entity(translator.toXml()).type(ELM_XML_TYPE);
     return resp.build();
@@ -55,7 +55,7 @@ public class TranslationResource {
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_JSON_TYPE)
   public Response cqlToElmJson(File cql) {
-    CqlTranslator translator = getTranslator(cql, false);
+    CqlTranslator translator = getTranslator(cql);
     ResponseBuilder resp = getResponse(translator);
     resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
     return resp.build();
@@ -87,7 +87,7 @@ public class TranslationResource {
       throw new TranslationFailureException("Unable to read request");
     }
   }
-  
+
   private CqlTranslator getTranslator(File cql, boolean disablePromotion) {
     try {
       //LibrarySourceLoader.registerProvider(
@@ -103,6 +103,10 @@ public class TranslationResource {
     } catch (IOException e) {
       throw new TranslationFailureException("Unable to read request");
     }
+  }
+
+  private CqlTranslator getTranslator(File cql) {
+    return getTranslator(cql, false);
   }
 
   private ResponseBuilder getResponse(CqlTranslator translator) {
