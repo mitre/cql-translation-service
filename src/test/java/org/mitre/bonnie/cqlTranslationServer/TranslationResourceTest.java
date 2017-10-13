@@ -82,6 +82,51 @@ public class TranslationResourceTest {
     return (String) result;
   }
 
+  private void validateListPromotionDisabled(String cqlTitle, int startLine, int startChar, String errorMessage) {
+    File file = new File(TranslationResourceTest.class.getResource(cqlTitle).getFile());
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    pkg.field("test", file, new MediaType("application", "cql"));
+    pkg.field("disablePromotion", "true");
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertTrue(resp.hasEntity());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(2, translatedPkg.getBodyParts().size());
+    assertEquals(1, translatedPkg.getFields("test").size());
+    JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
+    JsonObject obj = reader.readObject();
+    JsonObject library = obj.getJsonObject("library");
+    JsonArray annotations = library.getJsonArray("annotation");
+    assertNotNull(annotations);
+    JsonObject errorAnnotation = annotations.getJsonObject(0);
+    assertEquals("CqlToElmError", errorAnnotation.getString("type"));
+    assertEquals("semantic", errorAnnotation.getString("errorType"));
+    assertEquals(startLine, errorAnnotation.getInt("startLine"));
+    assertEquals(startChar, errorAnnotation.getInt("startChar"));
+    assertEquals(errorMessage, errorAnnotation.getString("message"));
+  }
+
+  private void validateListPromotionEnabled(String cqlTitle) {
+    File file = new File(TranslationResourceTest.class.getResource(cqlTitle).getFile());
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    pkg.field("test", file, new MediaType("application", "cql"));
+    pkg.field("disablePromotion", "false");
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertTrue(resp.hasEntity());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(2, translatedPkg.getBodyParts().size());
+    assertEquals(1, translatedPkg.getFields("test").size());
+    JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
+    JsonObject obj = reader.readObject();
+    JsonObject library = obj.getJsonObject("library");
+    JsonArray annotations = library.getJsonArray("annotation");
+    assertNull(annotations);
+    assertEquals(1, library.getJsonObject("statements").size());
+  }
+
   @Test
   public void testInvalidCqlAsXml() {
     File file = new File(TranslationResourceTest.class.getResource("invalid.cql").getFile());
@@ -158,7 +203,27 @@ public class TranslationResourceTest {
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));
   }
-  
+
+  @Test
+  public void testInvalidListPromotionExistsAsJson() {
+    validateListPromotionDisabled("ListPromotionExists.cql", 8, 13, "Could not resolve call to operator Exists with signature (System.Integer).");
+  }
+
+  @Test
+  public void testInvalidListPromotionInAsJson() {
+    validateListPromotionDisabled("ListPromotionIn.cql", 7, 16, "Could not resolve call to operator In with signature (System.Integer,System.Integer).");
+  }
+
+  @Test
+  public void testValidListPromotionInAsJson() {
+    validateListPromotionEnabled("ListPromotionIn.cql");
+  }
+
+  @Test
+  public void testValidListPromotionExistsAsJson() {
+    validateListPromotionEnabled("ListPromotionExists.cql");
+  }
+
   @Test
   public void testSingleLibraryAsMultipart() {
     File file = new File(TranslationResourceTest.class.getResource("valid.cql").getFile());
