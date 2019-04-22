@@ -1,5 +1,5 @@
 # fetch basic image
-FROM maven:3.3.9-jdk-8
+FROM maven:3.6.1-jdk-8
 
 # application placed into /opt/app
 RUN mkdir -p /app
