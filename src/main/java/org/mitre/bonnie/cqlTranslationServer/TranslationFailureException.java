@@ -18,6 +18,8 @@ import org.cqframework.cql.elm.tracking.TrackBack;
  */
 public class TranslationFailureException extends WebApplicationException {
 
+  private static final long serialVersionUID = 3188788471978609249L;
+
   public TranslationFailureException(String msg) {
     super(Response.status(Response.Status.BAD_REQUEST)
             .type(MediaType.TEXT_PLAIN_TYPE)

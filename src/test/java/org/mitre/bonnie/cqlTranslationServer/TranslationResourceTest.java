@@ -35,6 +35,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -86,13 +87,12 @@ public class TranslationResourceTest {
     File file = new File(TranslationResourceTest.class.getResource(cqlTitle).getFile());
     FormDataMultiPart pkg = new FormDataMultiPart();
     pkg.field("test", file, new MediaType("application", "cql"));
-    pkg.field("disablePromotion", "true");
-    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    Response resp = target.path("translator").queryParam("disable-list-promotion", "true").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
     assertTrue(resp.hasEntity());
     assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
     assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
     FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
-    assertEquals(2, translatedPkg.getBodyParts().size());
+    assertEquals(1, translatedPkg.getBodyParts().size());
     assertEquals(1, translatedPkg.getFields("test").size());
     JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
     JsonObject obj = reader.readObject();
@@ -111,13 +111,12 @@ public class TranslationResourceTest {
     File file = new File(TranslationResourceTest.class.getResource(cqlTitle).getFile());
     FormDataMultiPart pkg = new FormDataMultiPart();
     pkg.field("test", file, new MediaType("application", "cql"));
-    pkg.field("disablePromotion", "false");
-    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    Response resp = target.path("translator").queryParam("disable-list-promotion", "false").request(MediaType.MULTIPART_FORM_DATA).post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
     assertTrue(resp.hasEntity());
     assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
     assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
     FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
-    assertEquals(2, translatedPkg.getBodyParts().size());
+    assertEquals(1, translatedPkg.getBodyParts().size());
     assertEquals(1, translatedPkg.getFields("test").size());
     JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
     JsonObject obj = reader.readObject();
@@ -202,6 +201,36 @@ public class TranslationResourceTest {
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));
+    // By default, should not have annotations or result types
+    JsonArray defs = library.getJsonObject("statements").getJsonArray("def");
+    assertEquals(2, defs.size());
+    assertFalse(defs.getJsonObject(1).containsKey("resultTypeName"));
+    assertFalse(defs.getJsonObject(1).containsKey("annotation"));
+  }
+
+  @Test
+  public void testValidLibraryAsJsonWithAnnotationsAndResultTypes() {
+    File file = new File(TranslationResourceTest.class.getResource("valid.cql").getFile());
+    Response resp = target.path("translator").queryParam("annotations", "true").queryParam("result-types", "true").request(TranslationResource.ELM_JSON_TYPE).post(Entity.entity(file, TranslationResource.CQL_TEXT_TYPE));
+    assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    assertEquals(TranslationResource.ELM_JSON_TYPE, resp.getMediaType().toString());
+    assertTrue(resp.hasEntity());
+    JsonReader reader = Json.createReader(new StringReader(resp.readEntity(String.class)));
+    JsonObject obj = reader.readObject();
+    JsonObject library = obj.getJsonObject("library");
+    JsonArray annotations = library.getJsonArray("annotation");
+    assertNull(annotations);
+    JsonObject identifier = library.getJsonObject("identifier");
+    assertEquals("CMS146", identifier.getString("id"));
+    assertEquals("2", identifier.getString("version"));
+    // Validate it has annotations and result types
+    JsonArray defs = library.getJsonObject("statements").getJsonArray("def");
+    assertEquals(2, defs.size());
+    String resultTypeName = defs.getJsonObject(1).getString("resultTypeName");
+    assertEquals(resultTypeName, "{urn:hl7-org:elm-types:r1}Boolean");
+    JsonArray annotation = defs.getJsonObject(1).getJsonArray("annotation");
+    assertNotNull(annotation);
+    assertEquals(1, annotation.size());
   }
 
   @Test
@@ -244,10 +273,10 @@ public class TranslationResourceTest {
     assertNull(annotations);
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
-    assertEquals("2", identifier.getString("version"));    
+    assertEquals("2", identifier.getString("version"));
   }
-  
-  @Test 
+
+  @Test
   public void testCrossLibraryResolution() {
     String filenames[] = {"ProvidesDependency.cql", "HasDependency.cql"};
     FormDataMultiPart pkg = new FormDataMultiPart();
@@ -271,8 +300,8 @@ public class TranslationResourceTest {
       assertNull(annotations); // should be no errors, dependency should be resolved
       JsonObject identifier = library.getJsonObject("identifier");
       assertNotNull(identifier.getString("id"));
-      assertNotNull(identifier.getString("version"));    
-    }    
+      assertNotNull(identifier.getString("version"));
+    }
   }
 
   private static class ElmNamespaceContext implements NamespaceContext {
