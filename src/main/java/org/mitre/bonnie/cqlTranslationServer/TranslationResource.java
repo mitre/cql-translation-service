@@ -22,6 +22,7 @@ import javax.ws.rs.core.UriInfo;
 import org.cqframework.cql.cql2elm.CqlTranslator;
 import org.cqframework.cql.cql2elm.CqlTranslator.Options;
 import org.cqframework.cql.cql2elm.CqlTranslatorException;
+import org.cqframework.cql.cql2elm.FhirLibrarySourceProvider;
 import org.cqframework.cql.cql2elm.LibraryBuilder;
 import org.cqframework.cql.cql2elm.LibraryManager;
 import org.cqframework.cql.cql2elm.ModelManager;
@@ -107,6 +108,7 @@ public class TranslationResource {
       FormDataMultiPart translatedPkg = new FormDataMultiPart();
       MultipartLibrarySourceProvider lsp = new MultipartLibrarySourceProvider(pkg);
       libraryManager.getLibrarySourceLoader().registerProvider(lsp);
+      libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
           CqlTranslator translator = getTranslator(part.getEntityAs(File.class), info.getQueryParameters());
@@ -121,6 +123,8 @@ public class TranslationResource {
       return resp.build();
     } catch (IOException ex) {
       throw new TranslationFailureException("Unable to read request");
+    } finally {
+      libraryManager.getLibrarySourceLoader().clearProviders();
     }
   }
 
