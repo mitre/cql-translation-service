@@ -8,7 +8,7 @@ Build:
 
 Execute via the command line:
 
-    java -jar target/cqlTranslationServer-1.3.15-jar-with-dependencies.jar
+    java -jar target/cqlTranslationServer-1.3.17-jar-with-dependencies.jar
 
 ## Simple Request
 
