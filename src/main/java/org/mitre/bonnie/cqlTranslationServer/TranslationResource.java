@@ -115,10 +115,11 @@ public class TranslationResource {
           @Context UriInfo info
   ) {
     try {
-      FormDataMultiPart translatedPkg = new FormDataMultiPart();
+      // note: if FhirLibrarySourceProvider isn't registered first it doesn't seem to work
+      libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
       MultipartLibrarySourceProvider lsp = new MultipartLibrarySourceProvider(pkg);
       libraryManager.getLibrarySourceLoader().registerProvider(lsp);
-      libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
+      FormDataMultiPart translatedPkg = new FormDataMultiPart();
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
           CqlTranslator translator = getTranslator(part.getEntityAs(File.class), info.getQueryParameters());
