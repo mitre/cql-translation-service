@@ -80,20 +80,30 @@ public class TranslationResource {
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_XML_TYPE)
   public Response cqlToElmXml(File cql, @Context UriInfo info) {
-    CqlTranslator translator = getTranslator(cql, info.getQueryParameters());
-    ResponseBuilder resp = getResponse(translator);
-    resp = resp.entity(translator.toXml()).type(ELM_XML_TYPE);
-    return resp.build();
+    try {
+      libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
+      CqlTranslator translator = getTranslator(cql, info.getQueryParameters());
+      ResponseBuilder resp = getResponse(translator);
+      resp = resp.entity(translator.toXml()).type(ELM_XML_TYPE);
+      return resp.build();
+    } finally {
+      libraryManager.getLibrarySourceLoader().clearProviders();
+    }
   }
 
   @POST
   @Consumes(CQL_TEXT_TYPE)
   @Produces(ELM_JSON_TYPE)
   public Response cqlToElmJson(File cql, @Context UriInfo info) {
-    CqlTranslator translator = getTranslator(cql, info.getQueryParameters());
-    ResponseBuilder resp = getResponse(translator);
-    resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
-    return resp.build();
+    try {
+      libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
+      CqlTranslator translator = getTranslator(cql, info.getQueryParameters());
+      ResponseBuilder resp = getResponse(translator);
+      resp = resp.entity(translator.toJson()).type(ELM_JSON_TYPE);
+      return resp.build();
+    } finally {
+      libraryManager.getLibrarySourceLoader().clearProviders();
+    }
   }
 
   @POST
