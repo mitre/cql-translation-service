@@ -39,6 +39,11 @@
       <artifactId>jersey-media-multipart</artifactId>
       <version>${jersey.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxrs</artifactId>
+      <version>3.9.0.Final</version>
+    </dependency>
     <!-- uncomment this to get JSON support:
      <dependency>
         <groupId>org.glassfish.jersey.media</groupId>
