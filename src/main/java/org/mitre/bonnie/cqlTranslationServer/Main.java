@@ -3,17 +3,20 @@ package org.mitre.bonnie.cqlTranslationServer;
 import java.io.IOException;
 import java.net.URI;
 
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ServerProperties;
+import javax.ws.rs.core.Feature;
+import javax.ws.rs.core.FeatureContext;
 
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.CommandLine;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.ServerProperties;
+import org.jboss.resteasy.plugins.interceptors.CorsFilter;
 
 /**
  * Main class.
@@ -37,6 +40,7 @@ public class Main {
     final ResourceConfig rc = new ResourceConfig().packages("org.mitre.bonnie.cqlTranslationServer");
     rc.property(ServerProperties.RESPONSE_SET_STATUS_OVER_SEND_ERROR, "true");
     rc.register(MultiPartFeature.class);
+    rc.register(CorsFeature.class);
 
     // create and start a new instance of grizzly http server
     // exposing the Jersey application at BASE_URI
@@ -69,6 +73,23 @@ public class Main {
     catch (ParseException e) {
       System.err.println( "Unable to parse command line arguments: " + e.getMessage());
       server.shutdownNow();
+    }
+  }
+
+  /**
+   * Simple class to enable CORS (Cross-Origin Resource Sharing) on this server.
+   * ( more on CORS at https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS )
+   * If the request includes the 'Origin' header,
+   * the response will include that origin in the 'Access-Control-Allow-Origin' header.
+   * Based on a suggestion from https://stackoverflow.com/a/40994639 .
+   */
+  private static class CorsFeature implements Feature {
+    @Override
+    public boolean configure(FeatureContext context) {
+      CorsFilter corsFilter = new CorsFilter();
+      corsFilter.getAllowedOrigins().add("*");
+      context.register(corsFilter);
+      return true;
     }
   }
 }
