@@ -60,16 +60,16 @@ public class MultipartLibrarySourceProvider implements LibrarySourceProvider {
 
     public VersionedIdentifier getLibraryId() {
       return vid;
-    } 
+    }
 
     @Override
     public VersionedIdentifier visitLibraryDefinition(@NotNull cqlParser.LibraryDefinitionContext ctx) {
       vid = of.createVersionedIdentifier()
-              .withId(parseString(ctx.identifier()))
+              .withId(parseString(ctx.qualifiedIdentifier().identifier()))
               .withVersion(parseString(ctx.versionSpecifier()));
       return vid;
     }
-    
+
     @Override
     public Object visitTerminal(@NotNull TerminalNode node) {
       String text = node.getText();
