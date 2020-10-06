@@ -1,11 +1,19 @@
 package org.mitre.bonnie.cqlTranslationServer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -28,19 +36,15 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.media.multipart.BodyPart;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class TranslationResourceTest {
@@ -52,6 +56,7 @@ public class TranslationResourceTest {
   public void setUp() throws Exception {
     // start the server
     server = Main.startServer();
+
     // create the client
     Client c = ClientBuilder.newBuilder().register(MultiPartFeature.class).build();
 
@@ -68,11 +73,19 @@ public class TranslationResourceTest {
     server.shutdownNow();
   }
 
-  private static Document parseXml(File f) throws ParserConfigurationException, SAXException, IOException {
+  private static DocumentBuilder newDocumentBuilder() throws ParserConfigurationException, SAXException {
     DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
     domFactory.setNamespaceAware(true);
-    DocumentBuilder builder = domFactory.newDocumentBuilder();
-    return builder.parse(f);
+    return domFactory.newDocumentBuilder();
+  }
+
+  private static Document parseXml(File f) throws ParserConfigurationException, SAXException, IOException {
+    return newDocumentBuilder().parse(f);
+  }
+
+  private static Document parseXml(String s) throws ParserConfigurationException, SAXException, IOException {
+    InputSource source = new InputSource(new StringReader(s));
+    return newDocumentBuilder().parse(source);
   }
 
   private static String applyXPath(Document doc, String xPathStr) throws XPathExpressionException {
@@ -266,14 +279,7 @@ public class TranslationResourceTest {
     FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
     assertEquals(1, translatedPkg.getBodyParts().size());
     assertEquals(1, translatedPkg.getFields("foo").size());
-    JsonReader reader = Json.createReader(new StringReader(translatedPkg.getBodyParts().get(0).getEntityAs(String.class)));
-    JsonObject obj = reader.readObject();
-    JsonObject library = obj.getJsonObject("library");
-    JsonArray annotations = library.getJsonArray("annotation");
-    assertNull(annotations);
-    JsonObject identifier = library.getJsonObject("identifier");
-    assertEquals("CMS146", identifier.getString("id"));
-    assertEquals("2", identifier.getString("version"));
+    parseAndValidateJson( translatedPkg.getBodyParts().get(0), "CMS146", "2", 0 );
   }
 
   @Test
@@ -302,6 +308,89 @@ public class TranslationResourceTest {
       assertNotNull(identifier.getString("id"));
       assertNotNull(identifier.getString("version"));
     }
+  }
+
+  @Test
+  public void testMultipartRequestAsXml() throws Exception {
+    String filenames[] = {"valid.cql"};
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    for (String filename: filenames) {
+      File file = new File(TranslationResourceTest.class.getResource(filename).getFile());
+      pkg.field(filename, file, new MediaType("application", "cql"));
+    }
+
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA)
+        .header(TranslationResource.TARGET_FORMAT, TranslationResource.ELM_XML_TYPE)
+        .post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    assertTrue(resp.hasEntity());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(1, translatedPkg.getBodyParts().size());
+    for (String filename: filenames) {
+      assertEquals(1, translatedPkg.getFields(filename).size());
+      parseAndValidateXml( translatedPkg.getFields(filename).get(0), "CMS146", "2", 0 );
+    }
+  }
+
+  @Test
+  public void testMultipartRequestAsJsonAndXml() throws Exception {
+    String filenames[] = {"valid.cql"};
+    FormDataMultiPart pkg = new FormDataMultiPart();
+    for (String filename: filenames) {
+      File file = new File(TranslationResourceTest.class.getResource(filename).getFile());
+      pkg.field(filename, file, new MediaType("application", "cql"));
+    }
+
+    Response resp = target.path("translator").request(MediaType.MULTIPART_FORM_DATA)
+        .header(TranslationResource.TARGET_FORMAT, TranslationResource.ELM_XML_TYPE)
+        .header(TranslationResource.TARGET_FORMAT, TranslationResource.ELM_JSON_TYPE)
+        .post(Entity.entity(pkg, MediaType.MULTIPART_FORM_DATA));
+    assertEquals(Status.OK.getStatusCode(), resp.getStatus());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getType(), resp.getMediaType().getType());
+    assertEquals(MediaType.MULTIPART_FORM_DATA_TYPE.getSubtype(), resp.getMediaType().getSubtype());
+    assertTrue(resp.hasEntity());
+    FormDataMultiPart translatedPkg = resp.readEntity(FormDataMultiPart.class);
+    assertEquals(2, translatedPkg.getBodyParts().size());
+    for (String filename: filenames) {
+      assertEquals(2, translatedPkg.getFields(filename).size());
+      for( FormDataBodyPart part : translatedPkg.getFields(filename) ) {
+        if( part.getMediaType().equals( MediaType.valueOf( TranslationResource.ELM_XML_TYPE ) ) ) {
+        	parseAndValidateXml( part, "CMS146", "2", 0 );
+        } else if( part.getMediaType().equals( MediaType.valueOf( TranslationResource.ELM_JSON_TYPE ) ) ) {
+        	parseAndValidateJson( part, "CMS146", "2", 0 );
+        } else { 
+          fail( "Unsupported media type" );
+        }
+      }
+    }
+  }
+  
+  private Document parseAndValidateXml( BodyPart input, String expectedId, String expectedVersion, int expectedErrors ) throws Exception {
+      Document doc = parseXml(input.getEntityAs(String.class));
+      String errorCount = applyXPath(doc, "count(/elm:library/elm:annotation[@errorType='syntax'])");
+      assertEquals(0, Integer.parseInt(errorCount));
+      assertEquals("CMS146", applyXPath(doc, "/elm:library/elm:identifier/@id") );
+      assertEquals("2", applyXPath(doc, "/elm:library/elm:identifier/@version") );
+      return doc;
+  }
+  
+  private JsonObject parseAndValidateJson( BodyPart input, String expectedId, String expectedVersion, int expectedErrors ) {
+      JsonReader reader = Json.createReader( new StringReader(input.getEntityAs(String.class)) );
+      JsonObject obj = reader.readObject();
+      JsonObject library = obj.getJsonObject("library");
+      JsonArray annotations = library.getJsonArray("annotation");
+      if( expectedErrors == 0 ) { 
+    	  assertNull( annotations );
+      } else {
+    	  assertEquals( expectedErrors, annotations.size() );
+      }
+      JsonObject identifier = library.getJsonObject("identifier");
+      assertEquals( expectedId, identifier.getString("id"));
+      assertEquals( expectedVersion, identifier.getString("version"));
+      
+      return library;
   }
 
   private static class ElmNamespaceContext implements NamespaceContext {

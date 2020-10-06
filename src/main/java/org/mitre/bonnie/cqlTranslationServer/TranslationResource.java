@@ -43,6 +43,7 @@ public class TranslationResource {
   public static final String CQL_TEXT_TYPE = "application/cql";
   public static final String ELM_XML_TYPE = "application/elm+xml";
   public static final String ELM_JSON_TYPE = "application/elm+json";
+  public static final String TARGET_FORMAT = "X-TargetFormat";
   public static final MultivaluedMap<String, Options> PARAMS_TO_OPTIONS_MAP = new MultivaluedHashMap<String, Options>() {{
     putSingle("date-range-optimization", Options.EnableDateRangeOptimization);
     putSingle("annotations", Options.EnableAnnotations);
@@ -111,9 +112,11 @@ public class TranslationResource {
   @Produces(MediaType.MULTIPART_FORM_DATA)
   public Response cqlPackageToElmPackage(
           FormDataMultiPart pkg,
-          @HeaderParam("X-TargetFormat") @DefaultValue(ELM_JSON_TYPE) MediaType targetFormat,
+          @HeaderParam(TARGET_FORMAT) @DefaultValue(ELM_JSON_TYPE) List<String> targetFormats,
           @Context UriInfo info
   ) {
+    // Jersey doesn't support parsing multiple value headers by comma, so we need to do it 
+	// for ourselves. See https://github.com/jersey/jersey/issues/2436
     try {
       // note: if FhirLibrarySourceProvider isn't registered first it doesn't seem to work
       libraryManager.getLibrarySourceLoader().registerProvider(new FhirLibrarySourceProvider());
@@ -123,10 +126,17 @@ public class TranslationResource {
       for (String fieldId: pkg.getFields().keySet()) {
         for (FormDataBodyPart part: pkg.getFields(fieldId)) {
           CqlTranslator translator = getTranslator(part.getEntityAs(File.class), info.getQueryParameters());
-          if (targetFormat.equals(MediaType.valueOf(ELM_XML_TYPE))) {
-            translatedPkg.field(fieldId, translator.toXml(), targetFormat);
-          } else {
-            translatedPkg.field(fieldId, translator.toJson(), targetFormat);
+          for( String format : targetFormats ) {
+            for( String subformat : format.split(",") ) {
+              MediaType targetFormat = MediaType.valueOf( subformat );
+              if (targetFormat.equals(MediaType.valueOf(ELM_XML_TYPE))) {
+                translatedPkg.field(fieldId, translator.toXml(), targetFormat);
+              } else if (targetFormat.equals(MediaType.valueOf(ELM_JSON_TYPE))) {
+                translatedPkg.field(fieldId, translator.toJson(), targetFormat);
+              } else {
+                throw new TranslationFailureException("Unsupported media type");
+              }
+            }
           }
         }
       }
