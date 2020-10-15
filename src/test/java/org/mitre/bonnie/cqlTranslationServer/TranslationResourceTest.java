@@ -112,7 +112,7 @@ public class TranslationResourceTest {
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
     assertNotNull(annotations);
-    JsonObject errorAnnotation = annotations.getJsonObject(0);
+    JsonObject errorAnnotation = annotations.getJsonObject(1);
     assertEquals("CqlToElmError", errorAnnotation.getString("type"));
     assertEquals("semantic", errorAnnotation.getString("errorType"));
     assertEquals(startLine, errorAnnotation.getInt("startLine"));
@@ -135,7 +135,7 @@ public class TranslationResourceTest {
     JsonObject obj = reader.readObject();
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
-    assertNull(annotations);
+    assertEquals(1, annotations.size());
     assertEquals(1, library.getJsonObject("statements").size());
   }
 
@@ -170,8 +170,8 @@ public class TranslationResourceTest {
     JsonObject obj = reader.readObject();
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
-    assertEquals(1, annotations.size());
-    JsonObject errorAnnotation = annotations.getJsonObject(0);
+    assertEquals(2, annotations.size());
+    JsonObject errorAnnotation = annotations.getJsonObject(1);
     assertEquals("CqlToElmError", errorAnnotation.getString("type"));
     assertEquals("syntax", errorAnnotation.getString("errorType"));
     assertEquals(1, errorAnnotation.getInt("startLine"));
@@ -189,8 +189,8 @@ public class TranslationResourceTest {
     JsonObject obj = reader.readObject();
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
-    assertEquals(1, annotations.size());
-    JsonObject errorAnnotation = annotations.getJsonObject(0);
+    assertEquals(2, annotations.size());
+    JsonObject errorAnnotation = annotations.getJsonObject(1);
     assertEquals("CqlToElmError", errorAnnotation.getString("type"));
     assertEquals("include", errorAnnotation.getString("errorType"));
     assertEquals(5, errorAnnotation.getInt("startLine"));
@@ -210,7 +210,7 @@ public class TranslationResourceTest {
     JsonObject obj = reader.readObject();
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
-    assertNull(annotations);
+    assertEquals(1, annotations.size());
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));
@@ -232,7 +232,7 @@ public class TranslationResourceTest {
     JsonObject obj = reader.readObject();
     JsonObject library = obj.getJsonObject("library");
     JsonArray annotations = library.getJsonArray("annotation");
-    assertNull(annotations);
+    assertEquals(1, annotations.size());
     JsonObject identifier = library.getJsonObject("identifier");
     assertEquals("CMS146", identifier.getString("id"));
     assertEquals("2", identifier.getString("version"));
@@ -303,7 +303,7 @@ public class TranslationResourceTest {
       JsonObject obj = reader.readObject();
       JsonObject library = obj.getJsonObject("library");
       JsonArray annotations = library.getJsonArray("annotation");
-      assertNull(annotations); // should be no errors, dependency should be resolved
+      assertEquals(1, annotations.size()); // should be no errors, dependency should be resolved
       JsonObject identifier = library.getJsonObject("identifier");
       assertNotNull(identifier.getString("id"));
       assertNotNull(identifier.getString("version"));
@@ -382,9 +382,9 @@ public class TranslationResourceTest {
       JsonObject library = obj.getJsonObject("library");
       JsonArray annotations = library.getJsonArray("annotation");
       if( expectedErrors == 0 ) { 
-    	  assertNull( annotations );
+    	  assertEquals(1, annotations.size() );
       } else {
-    	  assertEquals( expectedErrors, annotations.size() );
+    	  assertEquals( expectedErrors + 1, annotations.size() );
       }
       JsonObject identifier = library.getJsonObject("identifier");
       assertEquals( expectedId, identifier.getString("id"));
