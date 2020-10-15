@@ -6,7 +6,7 @@
   <groupId>org.mitre.bonnie</groupId>
   <artifactId>cqlTranslationServer</artifactId>
   <packaging>jar</packaging>
-  <version>1.4.8</version>
+  <version>1.4.9</version>
   <name>cqlTranslationServer</name>
 
   <repositories>
@@ -44,12 +44,10 @@
       <artifactId>resteasy-jaxrs</artifactId>
       <version>3.9.0.Final</version>
     </dependency>
-    <!-- uncomment this to get JSON support:
      <dependency>
         <groupId>org.glassfish.jersey.media</groupId>
         <artifactId>jersey-media-moxy</artifactId>
     </dependency>
-    -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -59,32 +57,32 @@
     <dependency>
       <groupId>info.cqframework</groupId>
       <artifactId>cql</artifactId>
-      <version>1.4.8</version>
+      <version>1.4.9</version>
     </dependency>
     <dependency>
       <groupId>info.cqframework</groupId>
       <artifactId>model</artifactId>
-      <version>1.4.8</version>
+      <version>1.4.9</version>
     </dependency>
     <dependency>
       <groupId>info.cqframework</groupId>
       <artifactId>cql-to-elm</artifactId>
-      <version>1.4.8</version>
+      <version>1.4.9</version>
     </dependency>
     <dependency>
       <groupId>info.cqframework</groupId>
       <artifactId>elm</artifactId>
-      <version>1.4.8</version>
+      <version>1.4.9</version>
     </dependency>
     <dependency>
       <groupId>info.cqframework</groupId>
       <artifactId>quick</artifactId>
-      <version>1.4.8</version>
+      <version>1.4.9</version>
     </dependency>
     <dependency>
 		<groupId>info.cqframework</groupId>
 		<artifactId>qdm</artifactId>
-		<version>1.4.8</version>
+		<version>1.4.9</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
